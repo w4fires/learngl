@@ -1,10 +1,13 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
+const char* getShaderCode(const char *);
 
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
@@ -14,10 +17,6 @@ float vertices[] = {
 	0.0f,  0.5f, 0.0f,
 	0.8f, 0.7f, 0.0f
 };
-
-const char *vertextShaderSource = "#version 330 core\nlayout(location = 0) in vec3 aPos;\nvoid main()\n {\n gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n}";
-const char *fragmentShaderSource = "#version 330 core\nout vec4 FragColor;\n void main()\n {\n FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n}";
-
 
 int main() {
 
@@ -62,18 +61,17 @@ int main() {
 	//glFrontFace(GL_CW);
 
 	//shader创建
-	unsigned int vertextShader;
-	vertextShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertextShader, 1, &vertextShaderSource, NULL);
+	const char *vertextShaderCode = getShaderCode("shader.vs");
+	unsigned int vertextShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertextShader, 1, &vertextShaderCode, NULL);
 	glCompileShader(vertextShader);
 
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	const char *fragmentShaderCode = getShaderCode("shader.fs");
+	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderCode, NULL);
 	glCompileShader(fragmentShader);
 
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
+	unsigned int shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertextShader);
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram);
@@ -139,4 +137,28 @@ void processInput(GLFWwindow *window) {
 		std::cout << "escape key pressed" << std::endl;
 		glfwSetWindowShouldClose(window, true);
 	}
+}
+
+const char* getShaderCode(const char *shaderPath) {
+	std::ifstream shaderFile;
+	char *shaderCode = nullptr;
+	try {
+		//一定要用二进制文件, 否则计算缓冲区长度会出问题
+		shaderFile.open(shaderPath, std::ios_base::binary);
+		shaderFile.seekg(0, std::ios::end);
+		int charLen = shaderFile.tellg();
+		shaderCode = new char[charLen/sizeof(char)+1];
+		shaderFile.seekg(0, std::ios::beg);
+		shaderFile.read(shaderCode, charLen);
+		shaderCode[charLen] = 0;
+
+		//std::stringstream shaderStream;
+		//shaderStream << shaderFile.rdbuf();
+		//fileContent = shaderStream.str();
+		shaderFile.close();
+	}
+	catch (std::ifstream::failure e){
+		shaderFile.close();
+	}
+	return shaderCode;
 }
