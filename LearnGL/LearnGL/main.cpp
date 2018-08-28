@@ -109,7 +109,7 @@ int main() {
 	//param2: 顶点属性个数, 用来组装VAO的slot,如r,g,b,a,该值为4
 	//param3: 顶点属性的数据类型
 	//param4: 是否Normalization
-	//param5 & param6 : 取值的步长和偏移
+	//param5 & param6 : 取值的步长和偏移, byte为单位
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
 	//一定要enable对应的slot
 	glEnableVertexAttribArray(0);
