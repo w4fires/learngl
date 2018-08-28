@@ -1,13 +1,11 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "Shader.h"
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
-const char* getShaderCode(const char *);
 
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f, 1.0f, 0, 0,
@@ -19,6 +17,12 @@ float vertices[] = {
 unsigned int indices[] = {
 	0, 1, 2,
 	2, 1, 3
+};
+
+ShaderParam shaders[] = {
+	{ GL_VERTEX_SHADER, "./shader.vs" },
+	{ GL_FRAGMENT_SHADER, "./shader.fs" },
+	{ GL_NONE, NULL }
 };
 
 int main() {
@@ -63,22 +67,7 @@ int main() {
 	//可以设置正面的绕行方向为顺时针
 	//glFrontFace(GL_CW);
 
-	//shader创建
-	const char *vertextShaderCode = getShaderCode("shader.vs");
-	unsigned int vertextShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertextShader, 1, &vertextShaderCode, NULL);
-	glCompileShader(vertextShader);
-
-	const char *fragmentShaderCode = getShaderCode("shader.fs");
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderCode, NULL);
-	glCompileShader(fragmentShader);
-
-	unsigned int shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertextShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
+	Shader shaderProgram = Shader(shaders);
 	//构造VAO
 	unsigned int VAO; //等同于 GLuint VAO, VAO的ID
 	//unsigned int VAO[10]; //可以绑定多个
@@ -127,7 +116,7 @@ int main() {
 
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glUseProgram(shaderProgram);
+		shaderProgram.active();
 		//draw的绘制方式有GL_TRIANGLES, GL_TRIANGLES_FAN(三角形扇), GL_TRIANGLES_STRIP(三角形带)
 		//drawelements采用EBO索引绘制
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -157,28 +146,4 @@ void processInput(GLFWwindow *window) {
 		std::cout << "escape key pressed" << std::endl;
 		glfwSetWindowShouldClose(window, true);
 	}
-}
-
-const char* getShaderCode(const char *shaderPath) {
-	std::ifstream shaderFile;
-	char *shaderCode = nullptr;
-	try {
-		//一定要用二进制文件, 否则计算缓冲区长度会出问题
-		shaderFile.open(shaderPath, std::ios_base::binary);
-		shaderFile.seekg(0, std::ios::end);
-		int charLen = shaderFile.tellg();
-		shaderCode = new char[charLen/sizeof(char)+1];
-		shaderFile.seekg(0, std::ios::beg);
-		shaderFile.read(shaderCode, charLen);
-		shaderCode[charLen] = 0;
-
-		//std::stringstream shaderStream;
-		//shaderStream << shaderFile.rdbuf();
-		//fileContent = shaderStream.str();
-		shaderFile.close();
-	}
-	catch (std::ifstream::failure e){
-		shaderFile.close();
-	}
-	return shaderCode;
 }
