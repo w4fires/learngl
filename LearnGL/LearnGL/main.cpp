@@ -13,9 +13,12 @@ float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
 	0.5f, -0.5f, 0.0f,
 	0.0f,  0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	0.0f,  0.5f, 0.0f,
 	0.8f, 0.7f, 0.0f
+};
+
+unsigned int indices[] = {
+	0, 1, 2,
+	2, 1, 3
 };
 
 int main() {
@@ -93,6 +96,14 @@ int main() {
 	//cpu的顶点数据传输到gpu
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	//生成一个EBO
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	//绑定EBO到context
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//cpu的顶点索引数据传输到gpu
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	//从VBO取顶点数据填充到VAO指定的slot
 	//param0: slot号,0-15, shader程序需要该号码从指定的slot取数据,eg, layout(location=6) in vec3 xxx;
 	//param2: 顶点属性个数, 用来组装VAO的slot,如r,g,b,a,该值为4
@@ -110,8 +121,12 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindVertexArray(VAO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glUseProgram(shaderProgram);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//draw的绘制方式有GL_TRIANGLES, GL_TRIANGLES_FAN(三角形扇), GL_TRIANGLES_STRIP(三角形带)
+		//drawelements采用EBO索引绘制
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glFlush();
 		//双缓冲(Double Buffer)
 
