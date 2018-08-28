@@ -106,6 +106,7 @@ int main() {
 
 	//从VBO取顶点数据填充到VAO指定的slot
 	//param0: slot号,0-15, shader程序需要该号码从指定的slot取数据,eg, layout(location=6) in vec3 xxx;
+
 	//param2: 顶点属性个数, 用来组装VAO的slot,如r,g,b,a,该值为4
 	//param3: 顶点属性的数据类型
 	//param4: 是否Normalization
@@ -122,7 +123,11 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		float timeValue = glfwGetTime();
+		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "Color");
 		glUseProgram(shaderProgram);
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 		//draw的绘制方式有GL_TRIANGLES, GL_TRIANGLES_FAN(三角形扇), GL_TRIANGLES_STRIP(三角形带)
 		//drawelements采用EBO索引绘制
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
