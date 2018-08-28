@@ -10,10 +10,10 @@ void processInput(GLFWwindow *);
 const char* getShaderCode(const char *);
 
 float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	0.0f,  0.5f, 0.0f,
-	0.8f, 0.7f, 0.0f
+	-0.5f, -0.5f, 0.0f, 1.0f, 0, 0,
+	0.5f, -0.5f, 0.0f, 0, 1.0f, 0,
+	0.0f,  0.5f, 0.0f, 0, 0, 1.0f,
+	0.8f, 0.7f, 0.0f, 0.5f, 0.5f, 0
 };
 
 unsigned int indices[] = {
@@ -111,9 +111,12 @@ int main() {
 	//param3: 顶点属性的数据类型
 	//param4: 是否Normalization
 	//param5 & param6 : 取值的步长和偏移, byte为单位
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
 	//一定要enable对应的slot
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -121,13 +124,10 @@ int main() {
 		//display();
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		float timeValue = glfwGetTime();
-		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-		int vertexColorLocation = glGetUniformLocation(shaderProgram, "Color");
 		glUseProgram(shaderProgram);
-		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 		//draw的绘制方式有GL_TRIANGLES, GL_TRIANGLES_FAN(三角形扇), GL_TRIANGLES_STRIP(三角形带)
 		//drawelements采用EBO索引绘制
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
