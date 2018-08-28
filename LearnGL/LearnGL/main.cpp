@@ -9,7 +9,10 @@ void processInput(GLFWwindow *);
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
 	0.5f, -0.5f, 0.0f,
-	0.0f,  0.5f, 0.0f
+	0.0f,  0.5f, 0.0f,
+	0.5f, -0.5f, 0.0f,
+	0.0f,  0.5f, 0.0f,
+	0.8f, 0.7f, 0.0f
 };
 
 const char *vertextShaderSource = "#version 330 core\nlayout(location = 0) in vec3 aPos;\nvoid main()\n {\n gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n}";
@@ -51,6 +54,12 @@ int main() {
 	glViewport(0, 0, 800, 600);
 	//设置glfw窗口大小改变的事件回调
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	//开启背面剔除模式, 默认逆时针为正面 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	//可以设置正面的绕行方向为顺时针
+	//glFrontFace(GL_CW);
 
 	//shader创建
 	unsigned int vertextShader;
@@ -104,7 +113,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBindVertexArray(VAO);
 		glUseProgram(shaderProgram);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glFlush();
 		//双缓冲(Double Buffer)
 
