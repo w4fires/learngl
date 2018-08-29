@@ -1,22 +1,25 @@
 #include <iostream>
 #define GLEW_STATIC
+#define STB_IMAGE_IMPLEMENTATION
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <stb_image.h>
 #include "Shader.h"
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
 
 float vertices[] = {
-	-0.5f, -0.5f, 0.0f, 1.0f, 0, 0,
-	0.5f, -0.5f, 0.0f, 0, 1.0f, 0,
-	0.0f,  0.5f, 0.0f, 0, 0, 1.0f,
-	0.8f, 0.7f, 0.0f, 0.5f, 0.5f, 0
+	//     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
+	0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
+	0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
+	-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
+	-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
 };
 
 unsigned int indices[] = {
-	0, 1, 2,
-	2, 1, 3
+	0, 3, 1,
+	3, 2, 1
 };
 
 ShaderParam shaders[] = {
@@ -93,6 +96,30 @@ int main() {
 	//cpu的顶点索引数据传输到gpu
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	//生成一个texture buffer
+	unsigned int TBO;
+	glGenTextures(1, &TBO);
+	//绑定时默认会将TBO号码送给片段着色器第一个sampler2D, 不需要在手动uniform传过去
+	glBindTexture(GL_TEXTURE_2D, TBO);
+	//为纹理对象设置环绕,过滤方式
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//opengl坐标和像素坐标不一致, opengl是以左下为原点, 图片以左上为原点, 即y轴需要翻转
+	stbi_set_flip_vertically_on_load(true);
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("./container.jpg", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		printf("error occured");
+	}
+	stbi_image_free(data);
+	
 	//从VBO取顶点数据填充到VAO指定的slot
 	//param0: slot号,0-15, shader程序需要该号码从指定的slot取数据,eg, layout(location=6) in vec3 xxx;
 
@@ -100,12 +127,15 @@ int main() {
 	//param3: 顶点属性的数据类型
 	//param4: 是否Normalization
 	//param5 & param6 : 取值的步长和偏移, byte为单位
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
 	//一定要enable对应的slot
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -114,6 +144,7 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glBindTexture(GL_TEXTURE_2D, TBO);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		shaderProgram.active();
