@@ -99,7 +99,6 @@ int main() {
 	//生成一个texture buffer
 	unsigned int TBO;
 	glGenTextures(1, &TBO);
-	//绑定时默认会将TBO号码送给片段着色器第一个sampler2D, 不需要在手动uniform传过去
 	glBindTexture(GL_TEXTURE_2D, TBO);
 	//为纹理对象设置环绕,过滤方式
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -119,6 +118,20 @@ int main() {
 		printf("error occured");
 	}
 	stbi_image_free(data);
+
+	unsigned int TBO2;
+	glGenTextures(1, &TBO2);
+	glBindTexture(GL_TEXTURE_2D, TBO2);
+	data = stbi_load("./awesomeface.png", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		printf("error occured");
+	}
+	stbi_image_free(data);
+	
 	
 	//从VBO取顶点数据填充到VAO指定的slot
 	//param0: slot号,0-15, shader程序需要该号码从指定的slot取数据,eg, layout(location=6) in vec3 xxx;
@@ -138,19 +151,30 @@ int main() {
 	glEnableVertexAttribArray(2);
 
 
+	shaderProgram.active();
+	//绑定时默认会将TBO号码送给片段着色器第一个sampler2D, 不需要在手动uniform传过去
+	//如果需要动态滑动槽位, 需要手动指定uniform
+	glUniform1i(glGetUniformLocation(shaderProgram.ID, "ourTexture"), 0);
+	glUniform1i(glGetUniformLocation(shaderProgram.ID, "faceTexture"), 1);
+
+
 	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
 		//display();
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, TBO);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, TBO2);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		shaderProgram.active();
 		//draw的绘制方式有GL_TRIANGLES, GL_TRIANGLES_FAN(三角形扇), GL_TRIANGLES_STRIP(三角形带)
 		//drawelements采用EBO索引绘制
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glFlush();
 		//双缓冲(Double Buffer)
