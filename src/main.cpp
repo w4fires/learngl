@@ -5,6 +5,9 @@
 #include "GLFW/glfw3.h"
 #include "stb_image.h"
 #include "shader.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
@@ -157,6 +160,10 @@ int main() {
 	//如果需要动态滑动槽位, 需要手动指定uniform
 	glUniform1i(glGetUniformLocation(shaderProgram.ID, "ourTexture"), 0);
 	glUniform1i(glGetUniformLocation(shaderProgram.ID, "faceTexture"), 1);
+	glm::mat4 trans;
+	trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0, 0, 1.0f));
+	trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 0.5f));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "trans"), 1, GL_FALSE, glm::value_ptr(trans));
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -171,6 +178,7 @@ int main() {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, TBO2);
 		glBindVertexArray(VAO);
+		//glBindBuffer(GL_ARRAY_BUFFER, 0); //VBO允许解绑, 但EBO等不允许, 因为VBO信息已经设置到VAO中(指针, 步长等), VAO中的EBO是虚拟影射, 解除绑定就找不到了.
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		//draw的绘制方式有GL_TRIANGLES, GL_TRIANGLES_FAN(三角形扇), GL_TRIANGLES_STRIP(三角形带)
 		//drawelements采用EBO索引绘制
